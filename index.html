@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Alertas SARLAFT</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0F0F0F;--bg2:#161616;--bg3:#1E1E1E;--bg4:#252525;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#F0EDE8;--text2:#9A9590;--text3:#5A5650;
+  --accent:#E8452A;--accent2:#FF6B4A;
+  --accent-bg:rgba(232,69,42,0.12);--accent-border:rgba(232,69,42,0.25);
+  --blue:#3B82F6;--blue-bg:rgba(59,130,246,0.12);--blue-border:rgba(59,130,246,0.25);
+  --green:#22C55E;--green-bg:rgba(34,197,94,0.12);--green-border:rgba(34,197,94,0.25);
+  --amber:#F59E0B;--amber-bg:rgba(245,158,11,0.12);--amber-border:rgba(245,158,11,0.25);
+  --purple:#A855F7;--purple-bg:rgba(168,85,247,0.12);--purple-border:rgba(168,85,247,0.25);
+  --r:6px;--r-lg:10px;
+  --font:'Outfit',sans-serif;--font-display:'Syne',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --shadow:0 2px 8px rgba(0,0,0,0.4);--shadow-lg:0 16px 48px rgba(0,0,0,0.6);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+
+/* ── LOGIN ── */
+.login-wrap{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:0}
+.login-card{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:2.5rem;width:100%;max-width:380px;box-shadow:var(--shadow-lg);animation:slideUp 0.3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.login-logo{width:52px;height:52px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:18px;font-weight:600;color:#fff;margin:0 auto 1.25rem}
+.login-title{font-family:var(--font-display);font-size:22px;font-weight:700;text-align:center;margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text3);text-align:center;font-family:var(--font-mono);margin-bottom:1.75rem}
+.login-group{margin-bottom:1rem}
+.login-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-mono);margin-bottom:5px;display:block}
+.login-input{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);font-family:var(--font);font-size:14px;color:var(--text);outline:none;transition:border-color 0.15s}
+.login-input:focus{border-color:var(--border2);box-shadow:0 0 0 3px rgba(255,255,255,0.04)}
+.login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;margin-top:0.5rem}
+.login-btn:hover{background:var(--accent2)}
+.login-btn:active{transform:scale(0.98)}
+.login-err{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--accent2);margin-top:10px;display:none;text-align:center}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:32px;height:32px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.brand-name{font-family:var(--font-display);font-size:16px;font-weight:700}
+.brand-sub{font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.sp-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);font-family:var(--font-mono);background:var(--bg3);border:1px solid var(--border);padding:4px 10px;border-radius:20px}
+.sp-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.sp-dot.connected{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sp-dot.demo{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.user-pill{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 12px 4px 4px;cursor:pointer;transition:border-color 0.15s}
+.user-pill:hover{border-color:var(--border2)}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;font-family:var(--font-mono);color:#fff;flex-shrink:0}
+.avatar.sm{width:22px;height:22px;font-size:9px}
+.avatar.md{width:36px;height:36px;font-size:13px}
+.user-name-sm{font-size:12px;font-weight:500;line-height:1.2}
+.user-role-sm{font-size:10px;color:var(--text3);font-family:var(--font-mono)}
+.btn-logout{background:none;border:1px solid var(--border);border-radius:var(--r);padding:5px 10px;color:var(--text3);font-size:11px;cursor:pointer;font-family:var(--font-mono);transition:all 0.15s}
+.btn-logout:hover{background:var(--accent-bg);color:var(--accent2);border-color:var(--accent-border)}
+
+/* ── LAYOUT ── */
+.layout{display:flex;min-height:calc(100vh - 54px)}
+.sidebar{width:210px;background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;flex-shrink:0;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-section{padding:0 0.75rem;margin-bottom:1.25rem}
+.sidebar-label{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);font-family:var(--font-mono);padding:0 8px;margin-bottom:4px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:var(--font)}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.nav-btn.active{background:var(--accent-bg);color:var(--accent2);border:1px solid var(--accent-border)}
+.nav-icon{width:18px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.nav-count{margin-left:auto;background:var(--accent);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-family:var(--font-mono);font-weight:500}
+.sidebar-sep{border:none;border-top:1px solid var(--border);margin:0.5rem 0.75rem}
+.sidebar-months{padding:0 0.75rem;flex:1;overflow-y:auto}
+
+/* ── MAIN ── */
+.main{flex:1;padding:2rem;min-width:0}
+.page{display:none}
+.page.active{display:block;animation:pageFade 0.2s ease}
+@keyframes pageFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PAGE HEADER ── */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.1}
+.page-subtitle{font-size:13px;color:var(--text3);margin-top:4px}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.75rem}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.1rem 1.25rem;position:relative;overflow:hidden;transition:border-color 0.15s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.s-red::before{background:var(--accent)}
+.stat-card.s-amber::before{background:var(--amber)}
+.stat-card.s-blue::before{background:var(--blue)}
+.stat-card.s-green::before{background:var(--green)}
+.stat-card:hover{border-color:var(--border2)}
+.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--font-mono);margin-bottom:8px}
+.stat-value{font-size:32px;font-weight:300;font-family:var(--font-display);line-height:1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:5px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:var(--font-mono);letter-spacing:0.02em;white-space:nowrap;border:1px solid transparent}
+.b-pendiente{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.b-analisis{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+.b-cerrada{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.b-fraude{background:var(--accent-bg);color:var(--accent2);border-color:var(--accent-border)}
+.b-mora{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.b-lavado{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-border)}
+.b-inusual{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+.b-admin{background:var(--accent-bg);color:var(--accent2);border-color:var(--accent-border)}
+.b-analista{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+.b-local{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+
+/* ── INPUTS ── */
+input,select,textarea{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg3);outline:none;transition:border-color 0.15s;appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--border2);box-shadow:0 0 0 3px rgba(255,255,255,0.04)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235A5650'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+input::placeholder,textarea::placeholder{color:var(--text3)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;border:1px solid transparent;white-space:nowrap}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-primary:hover{background:#D8D5D0}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.btn-danger{background:var(--accent-bg);color:var(--accent2);border-color:var(--accent-border)}
+.btn-danger:hover{background:var(--accent);color:#fff}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px;font-family:var(--font-mono)}
+.btn[disabled]{opacity:0.4;cursor:not-allowed;pointer-events:none}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:180px}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.search-input{padding-left:30px}
+
+/* ── TABLE ── */
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:10px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);border-bottom:1px solid var(--border);font-family:var(--font-mono);white-space:nowrap;background:var(--bg3)}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s}
+tbody tr:hover{background:var(--bg3)}
+tbody tr:last-child{border-bottom:none}
+td{padding:11px 14px;vertical-align:middle}
+.td-name{font-weight:500}
+.td-mono{font-family:var(--font-mono);font-size:12px;color:var(--text2)}
+.td-amount{font-family:var(--font-mono);font-weight:500}
+.td-user{display:flex;align-items:center;gap:7px}
+
+/* ── EMPTY ── */
+.empty{padding:3.5rem 2rem;text-align:center}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:0.3}
+.empty-title{font-family:var(--font-display);font-size:18px;color:var(--text2);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--text3)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);animation:fadeIn 0.15s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);width:100%;max-width:620px;max-height:90vh;overflow-y:auto;animation:slideUp 0.2s ease}
+.modal-sm{max-width:420px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)}
+.modal-title{font-family:var(--font-display);font-size:19px;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:var(--r);border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:16px;transition:all 0.15s}
+.modal-close:hover{background:var(--bg3);color:var(--text)}
+.modal-body{padding:1.5rem}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-mono)}
+
+/* ── DETAIL ── */
+.dsec{margin-bottom:1.5rem}
+.dsec-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:var(--font-mono);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dkey{font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.06em}
+.dval{font-size:13px;font-weight:500}
+
+/* ── COMMENTS ── */
+.comment{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+.comment:last-child{border-bottom:none}
+.c-body{flex:1}
+.c-meta{font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-bottom:5px}
+.c-text{font-size:13px;line-height:1.55}
+
+/* ── DOCS ── */
+.doc-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px}
+.doc-name{flex:1;font-family:var(--font-mono);font-size:12px;color:var(--text2)}
+
+/* ── IMPORT ── */
+.import-zone{border:1px dashed var(--border2);border-radius:var(--r-lg);padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg2)}
+.import-zone:hover,.import-zone.drag{border-color:var(--accent);background:var(--accent-bg)}
+.import-icon{font-size:40px;margin-bottom:14px;opacity:0.5}
+.import-title{font-family:var(--font-display);font-size:20px;font-weight:600;margin-bottom:6px}
+.import-sub{font-size:13px;color:var(--text3)}
+
+/* ── HISTORY ── */
+.hist-client{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:10px;overflow:hidden}
+.hist-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;cursor:pointer;transition:background 0.12s}
+.hist-header:hover{background:var(--bg3)}
+.hist-header.open{border-bottom:1px solid var(--border)}
+.hist-name{font-weight:600;font-size:14px}
+.hist-doc{font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:2px}
+.hist-stats{display:flex;gap:20px;align-items:center}
+.hstat-val{font-family:var(--font-display);font-size:18px;font-weight:600;text-align:right}
+.hstat-label{font-size:10px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase}
+.hist-body{display:none;padding:0 1.25rem 0.75rem}
+.hist-body.open{display:block}
+.hist-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.hist-row:last-child{border-bottom:none}
+.hist-month{font-family:var(--font-mono);font-size:11px;color:var(--text3);min-width:100px}
+.hist-monto{font-family:var(--font-mono);font-weight:500;font-size:13px;margin-left:auto}
+
+/* ── USERS ── */
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.user-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;display:flex;gap:12px;transition:border-color 0.15s}
+.user-card:hover{border-color:var(--border2)}
+.u-info{flex:1;min-width:0}
+.u-name{font-weight:600;font-size:14px}
+.u-email{font-size:12px;color:var(--text3);font-family:var(--font-mono);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u-actions{display:flex;gap:4px;flex-shrink:0}
+
+/* ── LOADING ── */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:9998}
+.loading-spinner{width:36px;height:36px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:var(--font-mono);font-size:13px;color:var(--text3)}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--bg4);border:1px solid var(--border2);color:var(--text);padding:10px 16px;border-radius:var(--r);font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;animation:slideR 0.2s ease;max-width:320px}
+.toast.ok{border-left:3px solid var(--green)}
+.toast.err{border-left:3px solid var(--accent)}
+.toast.warn{border-left:3px solid var(--amber)}
+@keyframes slideR{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.chip{display:inline-block;padding:2px 8px;background:var(--bg4);border:1px solid var(--border);border-radius:4px;font-size:11px;font-family:var(--font-mono);color:var(--text2)}
+.info-banner{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--blue);margin-bottom:1.5rem;display:flex;gap:10px}
+hr.sep{border:none;border-top:1px solid var(--border);margin:1.25rem 0}
+.perm-note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--amber);margin-bottom:1rem;display:flex;gap:8px;align-items:center}
+
+@media(max-width:768px){.sidebar{display:none}.main{padding:1rem}.form-grid,.dgrid{grid-template-columns:1fr}.stats-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">SA</div>
+    <div class="login-title">Sistema de Alertas</div>
+    <div class="login-sub">SARLAFT — Credifamilia</div>
+    <div class="login-group">
+      <label class="login-label">Usuario</label>
+      <input class="login-input" type="text" id="login-user" placeholder="tu.nombre@credifamilia.com" autocomplete="username">
+    </div>
+    <div class="login-group">
+      <label class="login-label">Contraseña</label>
+      <input class="login-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()" id="login-btn">Ingresar</button>
+    <div class="login-err" id="login-err">Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loading-screen" style="display:none">
+  <div class="brand-mark" style="width:48px;height:48px;font-size:18px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);color:#fff;font-weight:600">SA</div>
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Iniciando...</div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">SA</div>
+    <div>
+      <div class="brand-name">Sistema de Alertas</div>
+      <div class="brand-sub">SARLAFT — Credifamilia</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="sp-status">
+      <div class="sp-dot connected" id="sp-dot"></div>
+      <span id="sp-label">MongoDB</span>
+    </div>
+    <div class="user-pill">
+      <div class="avatar md" id="top-avatar" style="background:#E8452A">WZ</div>
+      <div>
+        <div class="user-name-sm" id="top-name">Cargando...</div>
+        <div class="user-role-sm" id="top-role">—</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Salir</button>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Principal</div>
+      <button class="nav-btn active" onclick="showPage('dashboard')"><span class="nav-icon">◈</span> Dashboard</button>
+      <button class="nav-btn" onclick="showPage('alertas')"><span class="nav-icon">⚡</span> Alertas <span class="nav-count" id="badge-pend">0</span></button>
+      <button class="nav-btn" onclick="showPage('historico')"><span class="nav-icon">◷</span> Histórico</button>
+    </div>
+    <hr class="sidebar-sep">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Gestión</div>
+      <button class="nav-btn" id="nav-importar" onclick="showPage('importar')"><span class="nav-icon">↑</span> Importar</button>
+      <button class="nav-btn" id="nav-usuarios" onclick="showPage('usuarios')"><span class="nav-icon">◎</span> Usuarios</button>
+    </div>
+    <hr class="sidebar-sep">
+    <div class="sidebar-months">
+      <div class="sidebar-label">Por mes</div>
+      <div id="month-nav"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle" id="dash-subtitle">Resumen general</div>
+        </div>
+        <button class="btn btn-accent" id="dash-import-btn" onclick="showPage('importar')">↑ Importar alertas</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card s-red"><div class="stat-label">Total alertas</div><div class="stat-value" id="s-total">0</div><div class="stat-sub">acumuladas</div></div>
+        <div class="stat-card s-amber"><div class="stat-label">Pendientes</div><div class="stat-value" id="s-pend">0</div><div class="stat-sub">requieren atención</div></div>
+        <div class="stat-card s-blue"><div class="stat-label">En análisis</div><div class="stat-value" id="s-anal">0</div><div class="stat-sub">en proceso</div></div>
+        <div class="stat-card s-green"><div class="stat-label">Cerradas</div><div class="stat-value" id="s-cerr">0</div><div class="stat-sub">gestionadas</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:3fr 2fr;gap:1rem">
+        <div class="table-card">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:var(--font-mono)">Últimas alertas</span>
+            <button class="btn btn-xs btn-ghost" onclick="showPage('alertas')">Ver todas →</button>
+          </div>
+          <div id="recent-alerts"></div>
+        </div>
+        <div class="table-card">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:var(--font-mono)">Por tipo</span>
+          </div>
+          <div id="by-type" style="padding:1rem"></div>
+          <div style="padding:0 1rem 1rem;border-top:1px solid var(--border);padding-top:1rem">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:var(--font-mono);margin-bottom:10px">Mis alertas asignadas</div>
+            <div id="my-alerts"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div class="page" id="page-alertas">
+      <div class="page-header">
+        <div><div class="page-title">Alertas</div><div class="page-subtitle">Gestión y seguimiento de señales de alerta</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" class="search-input" id="s-alerts" placeholder="Buscar nombre o documento..." oninput="renderTable()">
+        </div>
+        <select id="f-estado" style="width:155px" onchange="renderTable()">
+          <option value="">Todos los estados</option>
+          <option>Pendiente</option><option>En análisis</option><option>Cerrada</option>
+        </select>
+        <select id="f-tipo" style="width:130px" onchange="renderTable()">
+          <option value="">Todos los tipos</option>
+          <option>Fraude</option><option>Mora</option><option>Lavado</option><option>Inusual</option>
+        </select>
+        <select id="f-mes" style="width:155px" onchange="renderTable()"><option value="">Todos los meses</option></select>
+        <select id="f-user" style="width:155px" onchange="renderTable()"><option value="">Todos los usuarios</option></select>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr>
+            <th>Cliente</th><th>Documento</th><th>Tipo</th>
+            <th>Monto</th><th>Estado</th><th>Asignado a</th><th>Mes</th><th style="text-align:center">💬</th>
+          </tr></thead>
+          <tbody id="alerts-body"></tbody>
+        </table>
+        <div id="alerts-empty" class="empty" style="display:none">
+          <div class="empty-icon">⚡</div>
+          <div class="empty-title">Sin alertas</div>
+          <div class="empty-sub">Importa un CSV o ajusta los filtros</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="page" id="page-historico">
+      <div class="page-header">
+        <div><div class="page-title">Histórico por cliente</div><div class="page-subtitle">Evolución acumulada mes a mes</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" class="search-input" id="s-hist" placeholder="Buscar cliente o documento..." oninput="renderHistory()">
+        </div>
+      </div>
+      <div id="hist-container"></div>
+    </div>
+
+    <!-- IMPORTAR -->
+    <div class="page" id="page-importar">
+      <div class="page-header">
+        <div><div class="page-title">Importar alertas</div><div class="page-subtitle">Carga mensual del archivo CSV</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <div>
+          <div class="import-zone" id="import-zone" onclick="document.getElementById('csv-input').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handleDrop(event)">
+            <div class="import-icon">↑</div>
+            <div class="import-title">Arrastra o selecciona el CSV</div>
+            <div class="import-sub" style="margin-top:6px">Columnas: nombre, documento, tipo, monto, usuario, mes</div>
+          </div>
+          <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="handleFile(this.files[0])">
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn btn-accent" onclick="loadDemo()">Cargar datos demo</button>
+            <button class="btn btn-ghost" onclick="downloadTemplate()">↓ Plantilla CSV</button>
+          </div>
+          <div id="import-result" style="margin-top:12px;font-size:13px;font-family:var(--font-mono)"></div>
+        </div>
+        <div class="table-card" style="padding:1.25rem">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:var(--font-mono);margin-bottom:12px">Formato del archivo</div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:var(--text2);margin-bottom:12px">nombre,documento,tipo,monto,usuario,mes</div>
+          <div style="margin-bottom:8px;font-size:13px;color:var(--text2)">Tipos válidos:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span class="badge b-fraude">Fraude</span>
+            <span class="badge b-mora">Mora</span>
+            <span class="badge b-lavado">Lavado</span>
+            <span class="badge b-inusual">Inusual</span>
+          </div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:6px">Ejemplo:</div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-family:var(--font-mono);font-size:11px;line-height:1.8">Juan Pérez,12345678,Fraude,<br>5000000,yahir.zabala,Abril 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div class="page" id="page-usuarios">
+      <div class="page-header">
+        <div><div class="page-title">Usuarios</div><div class="page-subtitle">Gestión de acceso y roles del sistema</div></div>
+        <button class="btn btn-accent" onclick="openUserModal()">+ Nuevo usuario</button>
+      </div>
+      <div class="info-banner">
+        <span style="font-size:16px;flex-shrink:0">ℹ</span>
+        <div>Cada usuario ingresa con su <strong>nombre de usuario</strong> y <strong>contraseña</strong> configurados aquí. El rol define qué puede hacer en el sistema.</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:1.25rem">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:var(--font-mono);margin-bottom:12px">Permisos por rol</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:12px">
+          <div><span class="badge b-admin" style="margin-bottom:8px;display:inline-flex">Admin</span><ul style="color:var(--text2);padding-left:16px;line-height:2"><li>Ver todas las alertas</li><li>Cambiar estado</li><li>Asignar usuarios</li><li>Adjuntar y comentar</li><li>Importar CSV</li><li>Gestionar usuarios</li></ul></div>
+          <div><span class="badge b-analista" style="margin-bottom:8px;display:inline-flex">Analista</span><ul style="color:var(--text2);padding-left:16px;line-height:2"><li>Ver todas las alertas</li><li>Cambiar estado</li><li>Asignar usuarios</li><li>Adjuntar y comentar</li><li style="color:var(--text3);text-decoration:line-through">Importar / Usuarios</li></ul></div>
+          <div><span class="badge b-local" style="margin-bottom:8px;display:inline-flex">Local</span><ul style="color:var(--text2);padding-left:16px;line-height:2"><li>Ver sus alertas asignadas</li><li>Adjuntar documentos</li><li>Comentar</li><li style="color:var(--text3);text-decoration:line-through">Cambiar estado</li><li style="color:var(--text3);text-decoration:line-through">Asignar / Importar</li></ul></div>
+        </div>
+      </div>
+      <div class="users-grid" id="users-grid"></div>
+    </div>
+
+  </main>
+</div>
+</div><!-- /app -->
+
+<div id="alert-modal"></div>
+<div id="user-modal"></div>
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONFIG MONGODB ATLAS DATA API
+//  Para cambiar a producción solo actualiza estos valores
+// ════════════════════════════════════════════════════════
+const DB = {
+  // ── MongoDB Atlas Data API ──────────────────────────
+  // Activa la Data API en: Atlas → App Services → Data API
+  // Copia el App ID y la API Key que te genera
+  appId:   'TU_APP_ID',          // App Services → App ID
+  apiKey:  'TU_API_KEY',         // App Services → API Keys → Create API Key
+  cluster: 'Cluster0',
+  database:'alertas_sarlaft',
+  // ───────────────────────────────────────────────────
+
+  // Modo de operación
+  // "local"  → datos en localStorage (funciona sin configurar MongoDB)
+  // "mongo"  → MongoDB Atlas Data API (requiere activar Data API en Atlas)
+  modo: 'local'
+};
+
+// URL base de la Data API
+const API_URL = `https://data.mongodb-api.com/app/${DB.appId}/endpoint/data/v1`;
+
+// ════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ════════════════════════════════════════════════════════
+let alerts = [];
+let users  = [];
+let currentUser = null;
+let nextId = 1;
+
+// Usuarios iniciales — se cargan en MongoDB la primera vez
+const INITIAL_USERS = [
+  { id:1, nombre:'Yahir Zabala',  usuario:'yahir.zabala',  password:'Monitorcf2026', rol:'Admin',    color:'#E8452A', activo:true },
+  { id:2, nombre:'Fabian Bernal', usuario:'fabian.bernal', password:'Monitorcf2026', rol:'Analista', color:'#3B82F6', activo:true },
+  { id:3, nombre:'Luisa Cadena',  usuario:'luisa.cadena',  password:'Monitorcf2026', rol:'Analista', color:'#22C55E', activo:true },
+  { id:4, nombre:'Kevin Prueba',  usuario:'kevin.prueba',  password:'Monitorcf2026', rol:'Local',    color:'#F59E0B', activo:true },
+];
+
+// ════════════════════════════════════════════════════════
+//  MONGODB DATA API
+// ════════════════════════════════════════════════════════
+async function mongoFind(collection, filter = {}) {
+  const r = await fetch(`${API_URL}/action/find`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-key': DB.apiKey },
+    body: JSON.stringify({ dataSource: DB.cluster, database: DB.database, collection, filter, limit: 5000 })
+  });
+  if (!r.ok) throw new Error(`MongoDB find error ${r.status}`);
+  const d = await r.json();
+  return d.documents || [];
+}
+
+async function mongoInsert(collection, document) {
+  const r = await fetch(`${API_URL}/action/insertOne`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-key': DB.apiKey },
+    body: JSON.stringify({ dataSource: DB.cluster, database: DB.database, collection, document })
+  });
+  if (!r.ok) throw new Error(`MongoDB insert error ${r.status}`);
+  return r.json();
+}
+
+async function mongoUpdate(collection, filter, update) {
+  const r = await fetch(`${API_URL}/action/updateOne`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-key': DB.apiKey },
+    body: JSON.stringify({ dataSource: DB.cluster, database: DB.database, collection, filter, update: { $set: update } })
+  });
+  if (!r.ok) throw new Error(`MongoDB update error ${r.status}`);
+  return r.json();
+}
+
+async function mongoDelete(collection, filter) {
+  const r = await fetch(`${API_URL}/action/deleteOne`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-key': DB.apiKey },
+    body: JSON.stringify({ dataSource: DB.cluster, database: DB.database, collection, filter })
+  });
+  if (!r.ok) throw new Error(`MongoDB delete error ${r.status}`);
+  return r.json();
+}
+
+// ════════════════════════════════════════════════════════
+//  CAPA DE DATOS — lee/escribe según el modo
+// ════════════════════════════════════════════════════════
+async function loadData() {
+  if (DB.modo === 'mongo') {
+    const [rawUsers, rawAlerts] = await Promise.all([
+      mongoFind('usuarios'),
+      mongoFind('alertas')
+    ]);
+    users  = rawUsers;
+    alerts = rawAlerts.map(a => ({ ...a, id: a.id || a._id }));
+    nextId = Math.max(0, ...alerts.map(a => a.id || 0)) + 1;
+  } else {
+    loadLocal();
+  }
+}
+
+async function dbSaveAlert(alert) {
+  if (DB.modo === 'mongo') {
+    if (alert._id) {
+      await mongoUpdate('alertas', { _id: alert._id }, alert);
+    } else {
+      const r = await mongoInsert('alertas', alert);
+      alert._id = r.insertedId;
+    }
+  }
+  saveLocal();
+}
+
+async function dbSaveUser(user) {
+  if (DB.modo === 'mongo') {
+    if (user._id) {
+      await mongoUpdate('usuarios', { _id: user._id }, user);
+    } else {
+      const r = await mongoInsert('usuarios', user);
+      user._id = r.insertedId;
+    }
+  }
+  saveLocal();
+}
+
+async function dbDeleteUser(userId) {
+  if (DB.modo === 'mongo') {
+    await mongoDelete('usuarios', { id: userId });
+  }
+  users = users.filter(u => u.id !== userId);
+  saveLocal();
+}
+
+// ════════════════════════════════════════════════════════
+//  LOCAL STORAGE (caché / modo local)
+// ════════════════════════════════════════════════════════
+function saveLocal() {
+  try { localStorage.setItem('sa_sarlaft', JSON.stringify({ alerts, users, nextId })); } catch(e) {}
+}
+
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem('sa_sarlaft') || 'null');
+    if (d && d.users && d.users.length) {
+      alerts = d.alerts || []; users = d.users; nextId = d.nextId || 1;
+      return true;
+    }
+  } catch(e) {}
+  // Primera vez: cargar usuarios iniciales
+  users = INITIAL_USERS.map(u => ({...u}));
+  alerts = []; nextId = 100;
+  saveLocal();
+  return true;
+}
+
+// ════════════════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ════════════════════════════════════════════════════════
+async function doLogin() {
+  const usr = document.getElementById('login-user').value.trim().toLowerCase();
+  const pwd = document.getElementById('login-pass').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+
+  if (!usr || !pwd) { err.style.display='block'; err.textContent='Completa todos los campos'; return; }
+
+  btn.textContent = 'Verificando...'; btn.disabled = true; err.style.display = 'none';
+
+  try {
+    // Cargar datos si no están
+    if (!users.length) await loadData();
+
+    // Buscar usuario
+    const found = users.find(u =>
+      (u.usuario?.toLowerCase() === usr || u.email?.toLowerCase() === usr) &&
+      u.password === pwd && u.activo !== false
+    );
+
+    if (!found) {
+      err.style.display = 'block';
+      err.textContent = 'Usuario o contraseña incorrectos';
+      btn.textContent = 'Ingresar'; btn.disabled = false;
+      return;
+    }
+
+    currentUser = found;
+    sessionStorage.setItem('sa_session', JSON.stringify({ id: found.id, usuario: found.usuario || found.email }));
+
+    // Mostrar app
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('loading-screen').style.display = 'flex';
+    document.getElementById('loading-text').textContent = `Bienvenido ${found.nombre}...`;
+
+    await new Promise(r => setTimeout(r, 800));
+    await loadData();
+
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    applyRoleUI();
+    renderAll();
+    toast(`Hola ${currentUser.nombre} — ${currentUser.rol}`, 'ok');
+
+  } catch(e) {
+    err.style.display = 'block';
+    err.textContent = 'Error al conectar. Intenta de nuevo.';
+    btn.textContent = 'Ingresar'; btn.disabled = false;
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('sa_session');
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-btn').textContent = 'Ingresar';
+  document.getElementById('login-btn').disabled = false;
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+window.onload = async () => {
+  // Cargar datos en background para tener usuarios disponibles al login
+  loadLocal();
+
+  // Verificar sesión activa
+  try {
+    const sess = JSON.parse(sessionStorage.getItem('sa_session') || 'null');
+    if (sess) {
+      const found = users.find(u => u.id === sess.id);
+      if (found) {
+        currentUser = found;
+        document.getElementById('login-wrap').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        applyRoleUI();
+        renderAll();
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Mostrar login
+  document.getElementById('login-wrap').style.display = 'flex';
+};
+
+// ════════════════════════════════════════════════════════
+//  PERMISOS
+// ════════════════════════════════════════════════════════
+function can(action) {
+  if (!currentUser) return false;
+  const r = currentUser.rol;
+  const perms = {
+    Admin:    ['ver_todo','cambiar_estado','asignar','adjuntar','comentar','importar','gestionar_usuarios'],
+    Analista: ['ver_todo','cambiar_estado','asignar','adjuntar','comentar'],
+    Local:    ['ver_propio','adjuntar','comentar'],
+  };
+  return (perms[r] || []).includes(action);
+}
+
+function visibleAlerts() {
+  if (can('ver_todo')) return alerts;
+  const uid = currentUser.usuario || currentUser.email || '';
+  return alerts.filter(a => a.asignado === uid);
+}
+
+// ════════════════════════════════════════════════════════
+//  ROLE UI
+// ════════════════════════════════════════════════════════
+function applyRoleUI() {
+  if (!currentUser) return;
+  const i = ini(currentUser.nombre);
+  document.getElementById('top-avatar').textContent = i;
+  document.getElementById('top-avatar').style.background = currentUser.color || '#E8452A';
+  document.getElementById('top-name').textContent = currentUser.nombre;
+  document.getElementById('top-role').textContent = currentUser.rol;
+  document.getElementById('nav-importar').style.display = can('importar') ? '' : 'none';
+  document.getElementById('nav-usuarios').style.display = can('gestionar_usuarios') ? '' : 'none';
+  document.getElementById('dash-import-btn').style.display = can('importar') ? '' : 'none';
+}
+
+// ════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.trim().toLowerCase().startsWith(page.substring(0,4))) b.classList.add('active');
+  });
+  const renders = { historico:renderHistory, usuarios:renderUsers, alertas:renderTable, dashboard:renderDash };
+  if (renders[page]) renders[page]();
+}
+
+function renderAll() { renderDash(); renderTable(); renderUsers(); renderHistory(); updateMonthNav(); updateFilterOpts(); }
+
+// ════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════
+function renderDash() {
+  const va = visibleAlerts();
+  document.getElementById('s-total').textContent = va.length;
+  document.getElementById('s-pend').textContent  = va.filter(a=>a.estado==='Pendiente').length;
+  document.getElementById('s-anal').textContent  = va.filter(a=>a.estado==='En análisis').length;
+  document.getElementById('s-cerr').textContent  = va.filter(a=>a.estado==='Cerrada').length;
+  document.getElementById('badge-pend').textContent = va.filter(a=>a.estado==='Pendiente').length;
+  document.getElementById('dash-subtitle').textContent = new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const recent = [...va].slice(-6).reverse();
+  const ra = document.getElementById('recent-alerts');
+  ra.innerHTML = recent.length ? recent.map(a=>`
+    <div onclick="openDetail(${a.id})" style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.12s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+      <div style="flex:1;min-width:0"><div style="font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.nombre}</div><div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">${a.mes} · $${fmt(a.monto)}</div></div>
+      ${sBadge(a.estado)}
+    </div>`).join('') : '<div class="empty" style="padding:2rem"><div class="empty-sub">Sin alertas aún</div></div>';
+
+  const tipos = ['Fraude','Mora','Lavado','Inusual'];
+  const max = Math.max(1,...tipos.map(t=>va.filter(a=>a.tipo===t).length));
+  document.getElementById('by-type').innerHTML = tipos.map(t=>{
+    const cnt = va.filter(a=>a.tipo===t).length;
+    return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">${tBadge(t)}<span style="font-family:var(--font-mono);font-size:12px;color:var(--text2)">${cnt}</span></div><div style="height:3px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="height:100%;background:var(--text);border-radius:2px;width:${Math.round(cnt/max*100)}%"></div></div></div>`;
+  }).join('');
+
+  const mine = va.filter(a=>a.asignado===(currentUser.usuario||currentUser.email));
+  document.getElementById('my-alerts').innerHTML = mine.length
+    ? `<div style="font-size:12px;color:var(--text2)">Tienes <strong style="color:var(--text)">${mine.length}</strong> alerta(s) asignada(s). <span style="color:var(--amber)">${mine.filter(a=>a.estado==='Pendiente').length} pendiente(s).</span></div>`
+    : `<div style="font-size:12px;color:var(--text3)">No tienes alertas asignadas.</div>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  TABLA DE ALERTAS
+// ════════════════════════════════════════════════════════
+function renderTable() {
+  const q  = document.getElementById('s-alerts').value.toLowerCase();
+  const fE = document.getElementById('f-estado').value;
+  const fT = document.getElementById('f-tipo').value;
+  const fM = document.getElementById('f-mes').value;
+  const fU = document.getElementById('f-user').value;
+  let list = visibleAlerts().filter(a => {
+    if (q && !a.nombre.toLowerCase().includes(q) && !a.documento.toLowerCase().includes(q)) return false;
+    if (fE && a.estado!==fE) return false;
+    if (fT && a.tipo!==fT) return false;
+    if (fM && a.mes!==fM) return false;
+    if (fU && a.asignado!==fU) return false;
+    return true;
+  });
+  const tbody = document.getElementById('alerts-body');
+  const empty = document.getElementById('alerts-empty');
+  if (!list.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = list.map(a => {
+    const u = users.find(x => (x.usuario||x.email) === a.asignado);
+    return `<tr onclick="openDetail(${a.id})">
+      <td class="td-name">${a.nombre}</td>
+      <td class="td-mono">${a.documento}</td>
+      <td>${tBadge(a.tipo)}</td>
+      <td class="td-amount">$${fmt(a.monto)}</td>
+      <td>${sBadge(a.estado)}</td>
+      <td><div class="td-user">${u?`<div class="avatar sm" style="background:${u.color}">${ini(u.nombre)}</div>`:''}${u?.nombre||a.asignado}</div></td>
+      <td><span class="chip">${a.mes}</span></td>
+      <td style="text-align:center;font-family:var(--font-mono);font-size:12px;color:var(--text3)">${a.comentarios?.length||''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  DETALLE DE ALERTA
+// ════════════════════════════════════════════════════════
+function openDetail(id) {
+  const a = alerts.find(x => x.id === id);
+  if (!a) return;
+  const canState  = can('cambiar_estado');
+  const canAssign = can('asignar');
+  document.getElementById('alert-modal').innerHTML = `
+  <div class="modal-overlay" onclick="if(event.target===this)closeModal('alert-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <div><div class="modal-title">${a.nombre}</div><div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">${a.documento} · ${a.mes}</div></div>
+        <button class="modal-close" onclick="closeModal('alert-modal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="dsec">
+          <div class="dsec-title">Información</div>
+          <div class="dgrid">
+            <div><div class="dkey">Tipo</div><div class="dval">${tBadge(a.tipo)}</div></div>
+            <div><div class="dkey">Monto</div><div class="dval" style="font-family:var(--font-mono)">$${fmt(a.monto)}</div></div>
+            <div><div class="dkey">Creada</div><div class="dval" style="font-family:var(--font-mono);font-size:12px">${a.creada||'—'}</div></div>
+            <div><div class="dkey">Por</div><div class="dval" style="font-family:var(--font-mono);font-size:12px">${a.creadaPor||'—'}</div></div>
+          </div>
+        </div>
+        <div class="dsec">
+          <div class="dsec-title">Gestión</div>
+          ${!canState?`<div class="perm-note">⚠ Tu rol (${currentUser.rol}) solo permite adjuntar y comentar.</div>`:''}
+          <div class="dgrid">
+            <div class="form-group">
+              <label class="form-label">Estado</label>
+              <select id="d-estado" ${!canState?'disabled style="opacity:.4;pointer-events:none"':''} onchange="updateField(${id},'estado',this.value)">
+                <option ${a.estado==='Pendiente'?'selected':''}>Pendiente</option>
+                <option ${a.estado==='En análisis'?'selected':''}>En análisis</option>
+                <option ${a.estado==='Cerrada'?'selected':''}>Cerrada</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Asignado a ${!canAssign?'🔒':''}</label>
+              <select id="d-asignado" ${!canAssign?'disabled style="opacity:.4;pointer-events:none"':''} onchange="updateField(${id},'asignado',this.value)">
+                ${users.filter(u=>u.activo!==false).map(u=>`<option value="${u.usuario||u.email}" ${a.asignado===(u.usuario||u.email)?'selected':''}>${u.nombre} (${u.rol})</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="dsec">
+          <div class="dsec-title">Documentos adjuntos (${a.docs?.length||0})</div>
+          <div id="docs-${id}">
+            ${(a.docs||[]).map((d,i)=>`<div class="doc-item"><span style="color:var(--blue);font-size:15px">📄</span><span class="doc-name">${d.name}</span><span style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">${d.fecha}</span></div>`).join('')||'<div style="font-size:13px;color:var(--text3)">Sin documentos adjuntos</div>'}
+          </div>
+          ${can('adjuntar')?`<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="doc-inp-${id}" placeholder="Nombre del documento (ej: informe.pdf)" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addDoc(${id})">+ Adjuntar</button></div>`:''}
+        </div>
+        <div class="dsec">
+          <div class="dsec-title">Comentarios (${a.comentarios?.length||0})</div>
+          <div id="comments-${id}">
+            ${(a.comentarios||[]).length?(a.comentarios||[]).map(c=>`<div class="comment"><div class="avatar sm" style="background:${c.color||'#6B6760'}">${c.iniciales||'?'}</div><div class="c-body"><div class="c-meta">${c.usuario} · ${c.fecha}</div><div class="c-text">${c.texto}</div></div></div>`).join(''):'<div style="font-size:13px;color:var(--text3);padding:8px 0">Sin comentarios aún</div>'}
+          </div>
+          ${can('comentar')?`<div style="display:flex;gap:10px;margin-top:14px;align-items:flex-start"><div class="avatar sm" style="background:${currentUser.color}">${ini(currentUser.nombre)}</div><div style="flex:1"><textarea id="cmt-${id}" placeholder="Escribe un comentario..." rows="2"></textarea><div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="btn btn-accent btn-sm" onclick="addComment(${id})">Comentar</button></div></div></div>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function closeModal(id) { document.getElementById(id).innerHTML=''; renderAll(); }
+
+async function updateField(id, field, value) {
+  const a = alerts.find(x=>x.id===id);
+  if (!a) return;
+  a[field] = value;
+  await dbSaveAlert(a);
+  renderAll();
+  toast('Guardado', 'ok');
+}
+
+async function addComment(id) {
+  const a = alerts.find(x=>x.id===id);
+  const txt = document.getElementById('cmt-'+id)?.value?.trim();
+  if (!a||!txt) return;
+  const now = new Date();
+  if (!a.comentarios) a.comentarios = [];
+  a.comentarios.push({ usuario:currentUser.nombre, iniciales:ini(currentUser.nombre), color:currentUser.color, fecha:now.toLocaleDateString('es-CO')+' '+now.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}), texto:txt });
+  await dbSaveAlert(a);
+  openDetail(id);
+  toast('Comentario agregado','ok');
+}
+
+async function addDoc(id) {
+  const a = alerts.find(x=>x.id===id);
+  const name = document.getElementById('doc-inp-'+id)?.value?.trim();
+  if (!a||!name) return;
+  if (!a.docs) a.docs = [];
+  a.docs.push({ name, fecha:new Date().toLocaleDateString('es-CO'), usuario:currentUser.nombre });
+  await dbSaveAlert(a);
+  openDetail(id);
+  toast('Documento adjuntado','ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  HISTÓRICO
+// ════════════════════════════════════════════════════════
+function renderHistory() {
+  const q = document.getElementById('s-hist').value.toLowerCase();
+  const byClient = {};
+  visibleAlerts().forEach(a => {
+    if (q && !a.nombre.toLowerCase().includes(q) && !a.documento.toLowerCase().includes(q)) return;
+    if (!byClient[a.documento]) byClient[a.documento] = { nombre:a.nombre, documento:a.documento, alertas:[] };
+    byClient[a.documento].alertas.push(a);
+  });
+  const cont = document.getElementById('hist-container');
+  const clients = Object.values(byClient);
+  if (!clients.length) { cont.innerHTML='<div class="empty"><div class="empty-icon">◷</div><div class="empty-title">Sin historial</div><div class="empty-sub">Importa alertas para ver el historial</div></div>'; return; }
+  cont.innerHTML = clients.map((c,ci)=>{
+    const total = c.alertas.reduce((s,a)=>s+Number(a.monto),0);
+    const meses = [...new Set(c.alertas.map(a=>a.mes))].length;
+    return `<div class="hist-client">
+      <div class="hist-header" id="hh-${ci}" onclick="toggleHist(${ci})">
+        <div><div class="hist-name">${c.nombre}</div><div class="hist-doc">${c.documento}</div></div>
+        <div class="hist-stats">
+          <div><div class="hstat-val">${c.alertas.length}</div><div class="hstat-label">alertas</div></div>
+          <div><div class="hstat-val">${meses}</div><div class="hstat-label">meses</div></div>
+          <div><div class="hstat-val" style="font-size:15px">$${fmtK(total)}</div><div class="hstat-label">acumulado</div></div>
+          <span id="ha-${ci}" style="color:var(--text3);font-size:13px">▼</span>
+        </div>
+      </div>
+      <div class="hist-body" id="hb-${ci}">
+        ${c.alertas.map(a=>`<div class="hist-row"><span class="hist-month">${a.mes}</span><div style="display:flex;gap:6px;align-items:center;flex:1;flex-wrap:wrap">${tBadge(a.tipo)} ${sBadge(a.estado)}</div><span class="hist-monto">$${fmt(a.monto)}</span><button class="btn btn-ghost btn-xs" onclick="openDetail(${a.id});event.stopPropagation()">Ver →</button></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleHist(ci) {
+  const body=document.getElementById('hb-'+ci),hdr=document.getElementById('hh-'+ci),arr=document.getElementById('ha-'+ci);
+  const open=body.classList.toggle('open');
+  hdr.classList.toggle('open',open);
+  if(arr) arr.textContent=open?'▲':'▼';
+}
+
+// ════════════════════════════════════════════════════════
+//  USUARIOS
+// ════════════════════════════════════════════════════════
+function renderUsers() {
+  if (!can('gestionar_usuarios')) return;
+  document.getElementById('users-grid').innerHTML = users.map(u=>`
+    <div class="user-card">
+      <div class="avatar md" style="background:${u.color}">${ini(u.nombre)}</div>
+      <div class="u-info">
+        <div class="u-name">${u.nombre}</div>
+        <div class="u-email">${u.usuario||u.email}</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px">${rolBadge(u.rol)}${!u.activo?'<span style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">inactivo</span>':''}</div>
+      </div>
+      <div class="u-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openUserModal(${u.id})" title="Editar">✎</button>
+        ${u.id!==currentUser?.id?`<button class="btn btn-danger btn-sm" onclick="confirmDeleteUser(${u.id})" title="Eliminar">✕</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openUserModal(id) {
+  if (!can('gestionar_usuarios')) return;
+  const u = id ? users.find(x=>x.id===id) : null;
+  const colors = ['#E8452A','#3B82F6','#22C55E','#F59E0B','#A855F7','#06B6D4','#6B7280','#EC4899'];
+  document.getElementById('user-modal').innerHTML = `
+  <div class="modal-overlay" onclick="if(event.target===this)closeModal('user-modal')">
+    <div class="modal modal-sm">
+      <div class="modal-header"><div class="modal-title">${u?'Editar usuario':'Nuevo usuario'}</div><button class="modal-close" onclick="closeModal('user-modal')">×</button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group full"><label class="form-label">Nombre completo</label><input type="text" id="u-nombre" value="${u?u.nombre:''}" placeholder="Ej: Yahir Zabala"></div>
+          <div class="form-group full"><label class="form-label">Usuario (para ingresar)</label><input type="text" id="u-usuario" value="${u?u.usuario||u.email:''}" placeholder="yahir.zabala"></div>
+          <div class="form-group full"><label class="form-label">Contraseña</label><input type="password" id="u-pass" value="${u?u.password:''}" placeholder="${u?'Dejar vacío para no cambiar':'Nueva contraseña'}"></div>
+          <div class="form-group"><label class="form-label">Rol</label>
+            <select id="u-rol">
+              <option ${u?.rol==='Admin'?'selected':''}>Admin</option>
+              <option ${u?.rol==='Analista'?'selected':''}>Analista</option>
+              <option ${u?.rol==='Local'?'selected':''}>Local</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Estado</label>
+            <select id="u-activo">
+              <option value="1" ${u?.activo!==false?'selected':''}>Activo</option>
+              <option value="0" ${u?.activo===false?'selected':''}>Inactivo</option>
+            </select>
+          </div>
+          <div class="form-group full"><label class="form-label">Color de avatar</label>
+            <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap" id="color-picks">
+              ${colors.map(c=>`<div onclick="selectColor('${c}')" data-color="${c}" style="width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${u?.color===c?'white':'transparent'};transition:border-color 0.15s"></div>`).join('')}
+            </div>
+            <input type="hidden" id="u-color" value="${u?.color||colors[0]}">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('user-modal')">Cancelar</button>
+        <button class="btn btn-accent" onclick="saveUserModal(${u?u.id:'null'})">${u?'Guardar':'Crear usuario'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function selectColor(c) {
+  document.getElementById('u-color').value=c;
+  document.querySelectorAll('#color-picks div').forEach(d=>{d.style.borderColor=d.dataset.color===c?'white':'transparent';});
+}
+
+async function saveUserModal(id) {
+  const nombre  = document.getElementById('u-nombre').value.trim();
+  const usuario = document.getElementById('u-usuario').value.trim().toLowerCase();
+  const pass    = document.getElementById('u-pass').value;
+  const rol     = document.getElementById('u-rol').value;
+  const color   = document.getElementById('u-color').value;
+  const activo  = document.getElementById('u-activo').value === '1';
+  if (!nombre||!usuario) { toast('Completa nombre y usuario','err'); return; }
+
+  if (id && id!=='null') {
+    const u = users.find(x=>x.id===id);
+    if (u) { Object.assign(u,{nombre,usuario,rol,color,activo}); if(pass) u.password=pass; await dbSaveUser(u); }
+    toast('Usuario actualizado','ok');
+  } else {
+    if (!pass) { toast('La contraseña es requerida','err'); return; }
+    const nu = { id:nextId++, nombre, usuario, password:pass, rol, color, activo };
+    users.push(nu);
+    await dbSaveUser(nu);
+    toast('Usuario creado','ok');
+  }
+  closeModal('user-modal');
+  renderUsers();
+  updateFilterOpts();
+}
+
+async function confirmDeleteUser(id) {
+  if (!confirm('¿Eliminar este usuario?')) return;
+  await dbDeleteUser(id);
+  renderUsers();
+  updateFilterOpts();
+  toast('Usuario eliminado','ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  IMPORTAR
+// ════════════════════════════════════════════════════════
+function handleDrop(e) { e.preventDefault(); document.getElementById('import-zone').classList.remove('drag'); handleFile(e.dataTransfer.files[0]); }
+
+function handleFile(file) {
+  if (!file||!file.name.endsWith('.csv')) { toast('Selecciona un archivo .csv','err'); return; }
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const lines = e.target.result.split('\n').filter(l=>l.trim());
+    if (lines.length<2) { toast('El archivo está vacío','err'); return; }
+    const rows = lines.slice(1).map(l=>{ const p=l.split(',').map(x=>x.trim().replace(/^"|"$/g,'')); return {nombre:p[0],documento:p[1],tipo:p[2],monto:p[3],usuario:p[4],mes:p[5]||mesActual()}; }).filter(r=>r.nombre);
+    await addAlerts(rows);
+    document.getElementById('import-result').innerHTML=`<span style="color:var(--green)">✓ ${rows.length} alertas importadas desde ${file.name}</span>`;
+  };
+  reader.readAsText(file);
+}
+
+async function loadDemo() {
+  const m0=mesActual(),m1=mesPrev(1),m2=mesPrev(2);
+  await addAlerts([
+    {nombre:'Carlos Mendoza',documento:'1045678901',tipo:'Fraude',monto:'12500000',usuario:'yahir.zabala',mes:m0},
+    {nombre:'Laura Jiménez',documento:'52789123',tipo:'Lavado',monto:'87000000',usuario:'fabian.bernal',mes:m0},
+    {nombre:'Pedro Salcedo',documento:'79456123',tipo:'Inusual',monto:'45000000',usuario:'kevin.prueba',mes:m0},
+    {nombre:'Ana Betancourt',documento:'43210987',tipo:'Fraude',monto:'9800000',usuario:'luisa.cadena',mes:m0},
+    {nombre:'Ricardo Vargas',documento:'80123456',tipo:'Lavado',monto:'230000000',usuario:'yahir.zabala',mes:m0},
+    {nombre:'Carlos Mendoza',documento:'1045678901',tipo:'Mora',monto:'3200000',usuario:'fabian.bernal',mes:m1},
+    {nombre:'Laura Jiménez',documento:'52789123',tipo:'Mora',monto:'1500000',usuario:'luisa.cadena',mes:m1},
+    {nombre:'Ana Betancourt',documento:'43210987',tipo:'Inusual',monto:'6700000',usuario:'kevin.prueba',mes:m1},
+    {nombre:'Carlos Mendoza',documento:'1045678901',tipo:'Inusual',monto:'5000000',usuario:'yahir.zabala',mes:m2},
+    {nombre:'Ricardo Vargas',documento:'80123456',tipo:'Mora',monto:'8900000',usuario:'fabian.bernal',mes:m2},
+  ]);
+  document.getElementById('import-result').innerHTML=`<span style="color:var(--green)">✓ 10 alertas de demo cargadas</span>`;
+}
+
+async function addAlerts(rows) {
+  const now = new Date().toLocaleDateString('es-CO');
+  for (const r of rows) {
+    const a = { id:nextId++, nombre:r.nombre||'', documento:r.documento||'', tipo:r.tipo||'Inusual', monto:r.monto||'0', asignado:r.usuario||users[0]?.usuario||'', estado:'Pendiente', mes:r.mes||mesActual(), creada:now, creadaPor:currentUser?.usuario||'', comentarios:[], docs:[] };
+    alerts.push(a);
+    await dbSaveAlert(a);
+  }
+  renderAll();
+  toast(`${rows.length} alertas importadas`,'ok');
+}
+
+function downloadTemplate() {
+  const csv=`nombre,documento,tipo,monto,usuario,mes\nJuan Pérez,12345678,Fraude,5000000,yahir.zabala,${mesActual()}\nMaría López,87654321,Mora,1500000,fabian.bernal,${mesActual()}\n`;
+  const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='plantilla_alertas.csv';a.click();
+  toast('Plantilla descargada','ok');
+}
+
+// ════════════════════════════════════════════════════════
+//  MONTH NAV + FILTERS
+// ════════════════════════════════════════════════════════
+function updateMonthNav() {
+  const meses=[...new Set(alerts.map(a=>a.mes))].sort();
+  document.getElementById('month-nav').innerHTML=meses.map(m=>`<button class="nav-btn" onclick="filterMonth('${m}')" style="font-size:11px"><span class="nav-icon" style="font-size:10px">●</span>${m}</button>`).join('')||`<div style="font-size:11px;color:var(--text3);padding:4px 10px">Sin datos</div>`;
+}
+
+function filterMonth(mes) { showPage('alertas'); document.getElementById('f-mes').value=mes; renderTable(); }
+
+function updateFilterOpts() {
+  const meses=[...new Set(alerts.map(a=>a.mes))].sort();
+  const fM=document.getElementById('f-mes'),cv=fM.value;
+  fM.innerHTML='<option value="">Todos los meses</option>'+meses.map(m=>`<option value="${m}" ${m===cv?'selected':''}>${m}</option>`).join('');
+  const fU=document.getElementById('f-user'),cu=fU.value;
+  fU.innerHTML='<option value="">Todos los usuarios</option>'+users.map(u=>`<option value="${u.usuario||u.email}" ${(u.usuario||u.email)===cu?'selected':''}>${u.nombre}</option>`).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════════
+function sBadge(s){const m={Pendiente:'pendiente','En análisis':'analisis',Cerrada:'cerrada'};return `<span class="badge b-${m[s]||'pendiente'}">${s}</span>`}
+function tBadge(t){return `<span class="badge b-${(t||'').toLowerCase()}">${t}</span>`}
+function rolBadge(r){const m={Admin:'admin',Analista:'analista',Local:'local'};return `<span class="badge b-${m[r]||'local'}">${r}</span>`}
+function ini(n){return(n||'').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}
+function fmt(n){return Number(n||0).toLocaleString('es-CO')}
+function fmtK(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(0)+'K';return fmt(n)}
+function mesActual(){return new Date().toLocaleDateString('es-CO',{month:'long',year:'numeric'}).replace(/^\w/,c=>c.toUpperCase())}
+function mesPrev(n){const d=new Date();d.setMonth(d.getMonth()-n);return d.toLocaleDateString('es-CO',{month:'long',year:'numeric'}).replace(/^\w/,c=>c.toUpperCase())}
+function toast(msg,type='ok'){const tc=document.getElementById('toasts');const t=document.createElement('div');t.className=`toast ${type}`;t.innerHTML=`<span>${type==='ok'?'✓':type==='err'?'✕':'!'}</span> ${msg}`;tc.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300)},3000)}
+</script>
+</body>
+</html>
